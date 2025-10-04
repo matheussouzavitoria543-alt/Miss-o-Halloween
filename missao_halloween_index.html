@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Missão Halloween</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Poppins', sans-serif; }
+        .progress-bar { transition: width 0.5s ease-in-out; }
+        .modal { transition: opacity 0.3s ease, transform 0.3s ease; pointer-events:none; opacity:0; }
+        .modal.show { opacity:1; transform:translateY(0); pointer-events:auto; }
+        .settings-panel { transition: right 0.3s ease; right:-350px; }
+        .settings-panel.open { right:0; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+<!-- Conteúdo principal -->
+<div class="container mx-auto py-8 px-4">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-800">Missão Halloween 🎃</h1>
+        <button onclick="openAddProgress()" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md flex items-center space-x-2 transition">
+            <i data-feather="plus"></i><span>Nova Barra</span>
+        </button>
+    </div>
+    <div id="progress-bars-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+</div>
+
+<!-- Modal de adicionar barra -->
+<div id="add-progress-modal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 w-full max-w-md">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold">Nova Barra de Progresso</h2>
+            <button onclick="closeAddProgress()" class="text-gray-500 hover:text-gray-700"><i data-feather="x"></i></button>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nome da Barra</label>
+                <input type="text" id="progress-name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Meta</label>
+                <input type="number" id="progress-target" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="100">
+            </div>
+            <button onclick="createProgress()" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md transition">Criar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+feather.replace();
+
+let currentProgressColor = 'bg-blue-500';
+let progressBars = JSON.parse(localStorage.getItem('progressBars')) || [];
+
+function openAddProgress() { document.getElementById('add-progress-modal').classList.add('show'); }
+function closeAddProgress() { document.getElementById('add-progress-modal').classList.remove('show'); }
+
+function createProgress() {
+    const name = document.getElementById('progress-name').value.trim();
+    const target = parseInt(document.getElementById('progress-target').value) || 100;
+    if (!name || target <= 0) { alert('Nome ou meta inválidos'); return; }
+    const progressBar = { id: Date.now(), name, current: 0, target, color: currentProgressColor };
+    progressBars.push(progressBar);
+    localStorage.setItem('progressBars', JSON.stringify(progressBars));
+    renderProgressBars();
+    closeAddProgress();
+    document.getElementById('progress-name').value = '';
+    document.getElementById('progress-target').value = '';
+}
+
+function renderProgressBars() {
+    const container = document.getElementById('progress-bars-container');
+    container.innerHTML = '';
+    if (progressBars.length === 0) { container.innerHTML = '<p class="col-span-full text-center py-12 text-gray-500">Nenhuma barra de progresso criada ainda.</p>'; return; }
+    progressBars.forEach(bar => {
+        const percentage = Math.min(100, Math.round((bar.current / bar.target) * 100));
+        const div = document.createElement('div');
+        div.className = 'progress-card bg-white p-5 rounded-lg shadow-md border border-gray-100';
+        div.innerHTML = `
+            <div class="flex justify-between items-start mb-3">
+                <h3 class="font-semibold text-lg">${bar.name}</h3>
+            </div>
+            <div class="mb-2">
+                <div class="flex justify-between text-sm text-gray-600 mb-1">
+                    <span>Progresso</span>
+                    <span>${bar.current}/${bar.target}</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div class="progress-bar ${bar.color} h-2.5 rounded-full" style="width: ${percentage}%"></div>
+                </div>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+renderProgressBars();
+</script>
+</body>
+</html>
